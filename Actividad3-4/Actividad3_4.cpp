@@ -1,7 +1,8 @@
 ﻿#include <cstdio>
 #include <cstdlib>
-
 #include <time.h>
+
+#define n_iterations 100000
 
 void MatrixMultiplication(double* A, double* B, double* C, int N) {
 	for (int i = 0; i < N; i++) {
@@ -15,14 +16,12 @@ void MatrixMultiplication(double* A, double* B, double* C, int N) {
 }
 
 void main() {
-
 	clock_t start, stop;
 
 	double* A;
 	double* B;
 	double* C;
 	int lengths[] = { 1,2,4,8,16,32,64 };
-	int tam = 100000;
 	for (int i = 0; i < sizeof(lengths) / sizeof(int); i++)
 	{
 		A = (double*)malloc(sizeof(double) * lengths[i] * lengths[i]);
@@ -37,14 +36,16 @@ void main() {
 				B[k * lengths[i] + j] = k - j;
 			}
 		}
-		if (i > 6)tam = 10;
+
 		start = clock();
-		for (int j = 0; j < tam; j++)
+
+		for (int j = 0; j < n_iterations; j++)
 		{
 			MatrixMultiplication(A, B, C, lengths[i]);
 		}
+		
 		stop = clock();
-		printf("Tiempo secuencial: %f milisegundos para N=%d\n", ((float)(stop - start) / tam) / CLOCKS_PER_SEC, lengths[i]);
+		printf("Tiempo secuencial: %f milisegundos para N=%d\n", ((float)(stop - start) / n_iterations) / CLOCKS_PER_SEC, lengths[i]);
 
 		if (lengths[i] == 64) {
 			printf("Diagonal de la matriz de tamaño 64*64");
