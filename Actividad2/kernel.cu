@@ -4,17 +4,17 @@
 
 #include <stdio.h>
 
-cudaError_t multiplyWithCuda(int *c, const int *a, const int *b, unsigned int size);
+cudaError_t multiplyWithCuda(double *c, const double *a, const double *b, unsigned int size);
 
-__global__ void mulKernel(int *c, const int *a, const int *b)
+__global__ void mulKernel(double *c, const double *a, const double *b)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     printf("ID_BLOQUE X: %d\tID_BLOQUE Y: %d\tx: %d\ty: %d\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y);
     c[i] = a[i] * b[i];
 }
 
-int sumArray (int v[], int n){
-    int sum = 0;
+double sumArray (double v[], int n){
+    double sum = 0;
 
     for(int i = 0; i <n; i++){
         sum += v[i];
@@ -27,15 +27,15 @@ int main()
 {
     const int arraySize = 100;
 
-    int a[arraySize] = { 0 };
-    int b[arraySize] = { 0 };
+    double a[arraySize] = { 0 };
+    double b[arraySize] = { 0 };
 
     for(int i = 0; i < arraySize; i++){
         a[i] = i;
         b[i] = 2*i;
     }
 
-    int c[arraySize] = { 0 };
+    double c[arraySize] = { 0 };
 
     // Add vectors in parallel.
     cudaError_t cudaStatus = multiplyWithCuda(c, a, b, arraySize);
@@ -61,11 +61,11 @@ int main()
 }
 
 // Helper function for using CUDA to add vectors in parallel.
-cudaError_t multiplyWithCuda(int *c, const int *a, const int *b, unsigned int size)
+cudaError_t multiplyWithCuda(double *c, const double *a, const double *b, unsigned int size)
 {
-    int *dev_a = 0;
-    int *dev_b = 0;
-    int *dev_c = 0;
+    double *dev_a = 0;
+    double *dev_b = 0;
+    double *dev_c = 0;
     cudaError_t cudaStatus;
 
     // Choose which GPU to run on, change this on a multi-GPU system.
@@ -76,32 +76,32 @@ cudaError_t multiplyWithCuda(int *c, const int *a, const int *b, unsigned int si
     }
 
     // Allocate GPU buffers for three vectors (two input, one output)    .
-    cudaStatus = cudaMalloc((void**)&dev_c, size * sizeof(int));
+    cudaStatus = cudaMalloc((void**)&dev_c, size * sizeof(double));
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
         goto Error;
     }
 
-    cudaStatus = cudaMalloc((void**)&dev_a, size * sizeof(int));
+    cudaStatus = cudaMalloc((void**)&dev_a, size * sizeof(double));
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
         goto Error;
     }
 
-    cudaStatus = cudaMalloc((void**)&dev_b, size * sizeof(int));
+    cudaStatus = cudaMalloc((void**)&dev_b, size * sizeof(double));
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
         goto Error;
     }
 
     // Copy input vectors from host memory to GPU buffers.
-    cudaStatus = cudaMemcpy(dev_a, a, size * sizeof(int), cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(dev_a, a, size * sizeof(double), cudaMemcpyHostToDevice);
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMemcpy failed!");
         goto Error;
     }
 
-    cudaStatus = cudaMemcpy(dev_b, b, size * sizeof(int), cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(dev_b, b, size * sizeof(double), cudaMemcpyHostToDevice);
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMemcpy failed!");
         goto Error;
@@ -127,7 +127,7 @@ cudaError_t multiplyWithCuda(int *c, const int *a, const int *b, unsigned int si
     }
 
     // Copy output vector from GPU buffer to host memory.
-    cudaStatus = cudaMemcpy(c, dev_c, size * sizeof(int), cudaMemcpyDeviceToHost);
+    cudaStatus = cudaMemcpy(c, dev_c, size * sizeof(double), cudaMemcpyDeviceToHost);
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMemcpy failed!");
         goto Error;
