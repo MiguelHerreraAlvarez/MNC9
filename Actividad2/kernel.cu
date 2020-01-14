@@ -8,7 +8,8 @@ cudaError_t multiplyWithCuda(int *c, const int *a, const int *b, unsigned int si
 
 __global__ void mulKernel(int *c, const int *a, const int *b)
 {
-    int i = threadIdx.x;
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    printf("ID_BLOQUE X: %d\tID_BLOQUE Y: %d\tx: %d\ty: %d\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y);
     c[i] = a[i] * b[i];
 }
 
@@ -106,8 +107,9 @@ cudaError_t multiplyWithCuda(int *c, const int *a, const int *b, unsigned int si
         goto Error;
     }
 
+    dim3 threadsPerBlock(10, 1)
     // Launch a kernel on the GPU with one thread for each element.
-    mulKernel<<<1, size>>>(dev_c, dev_a, dev_b);
+    mulKernel<<<10, threadsPerBlock>>>(dev_c, dev_a, dev_b);
 
     // Check for any errors launching the kernel
     cudaStatus = cudaGetLastError();
