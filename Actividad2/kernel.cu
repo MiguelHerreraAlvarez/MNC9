@@ -14,9 +14,16 @@ __global__ void addKernel(int *c, const int *a, const int *b)
 
 int main()
 {
-    const int arraySize = 5;
-    const int a[arraySize] = { 1, 2, 3, 4, 5 };
-    const int b[arraySize] = { 10, 20, 30, 40, 50 };
+    const int arraySize = 100;
+
+    const int a[arraySize];
+    const int b[arraySize];
+
+    for(int i = 0; i < arraySize; i++){
+        a[i] = i;
+        b[i] = 2*i;
+    }
+
     int c[arraySize] = { 0 };
 
     // Add vectors in parallel.
