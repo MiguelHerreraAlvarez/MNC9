@@ -1,4 +1,3 @@
-
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
@@ -9,8 +8,8 @@ cudaError_t multiplyWithCuda(double *c, const double *a, const double *b, unsign
 __global__ void mulKernel(double *c, const double *a, const double *b)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
-    printf("ID_BLOQUE X: %d\tID_BLOQUE Y: %d\tx: %d\ty: %d\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y);
-    c[i] = a[i] * b[i];
+        c[i] = a[i] * b[i];
+	printf("DIM= %d\tID_BLOQUE X: %d\tx: %d\ty: %d\t c[i]= %lf = (a[i]= %lf)*(b[i]=%lf)\n",blockDim.x, blockIdx.x, threadIdx.x, threadIdx.y, c[i], a[i], b[i]);
 }
 
 double sumArray (double v[], int n){
