@@ -4,12 +4,12 @@
 
 #include <stdio.h>
 
-cudaError_t addWithCuda(int *c, const int *a, const int *b, unsigned int size);
+cudaError_t multiplyWithCuda(int *c, const int *a, const int *b, unsigned int size);
 
-__global__ void addKernel(int *c, const int *a, const int *b)
+__global__ void mulKernel(int *c, const int *a, const int *b)
 {
     int i = threadIdx.x;
-    c[i] = a[i] + b[i];
+    c[i] = a[i] * b[i];
 }
 
 int main()
@@ -20,9 +20,9 @@ int main()
     int c[arraySize] = { 0 };
 
     // Add vectors in parallel.
-    cudaError_t cudaStatus = addWithCuda(c, a, b, arraySize);
+    cudaError_t cudaStatus = multiplyWithCuda(c, a, b, arraySize);
     if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "addWithCuda failed!");
+        fprintf(stderr, "multiplyWithCuda failed!");
         return 1;
     }
 
@@ -41,7 +41,7 @@ int main()
 }
 
 // Helper function for using CUDA to add vectors in parallel.
-cudaError_t addWithCuda(int *c, const int *a, const int *b, unsigned int size)
+cudaError_t multiplyWithCuda(int *c, const int *a, const int *b, unsigned int size)
 {
     int *dev_a = 0;
     int *dev_b = 0;
@@ -88,12 +88,12 @@ cudaError_t addWithCuda(int *c, const int *a, const int *b, unsigned int size)
     }
 
     // Launch a kernel on the GPU with one thread for each element.
-    addKernel<<<1, size>>>(dev_c, dev_a, dev_b);
+    mulKernel<<<1, size>>>(dev_c, dev_a, dev_b);
 
     // Check for any errors launching the kernel
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "addKernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
+        fprintf(stderr, "mulKernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
         goto Error;
     }
     
@@ -101,7 +101,7 @@ cudaError_t addWithCuda(int *c, const int *a, const int *b, unsigned int size)
     // any errors encountered during the launch.
     cudaStatus = cudaDeviceSynchronize();
     if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching addKernel!\n", cudaStatus);
+        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching mulKernel!\n", cudaStatus);
         goto Error;
     }
 
