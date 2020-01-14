@@ -14,9 +14,16 @@ __global__ void mulKernel(int *c, const int *a, const int *b)
 
 int main()
 {
-    const int arraySize = 5;
-    const int a[arraySize] = { 1, 2, 3, 4, 5 };
-    const int b[arraySize] = { 10, 20, 30, 40, 50 };
+    const int arraySize = 100;
+
+    const int a[arraySize];
+    const int b[arraySize];
+
+    for(int i = 0; i < arraySize; i++){
+        a[i] = i;
+        b[i] = 2*i;
+    }
+
     int c[arraySize] = { 0 };
 
     // Add vectors in parallel.
@@ -26,8 +33,10 @@ int main()
         return 1;
     }
 
-    printf("{1,2,3,4,5} + {10,20,30,40,50} = {%d,%d,%d,%d,%d}\n",
-        c[0], c[1], c[2], c[3], c[4]);
+
+
+    printf("El producto escalar es: {%d}\n",
+        sumArray(c,arraySize));
 
     // cudaDeviceReset must be called before exiting in order for profiling and
     // tracing tools such as Nsight and Visual Profiler to show complete traces.
