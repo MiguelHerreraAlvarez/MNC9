@@ -12,6 +12,16 @@ __global__ void mulKernel(int *c, const int *a, const int *b)
     c[i] = a[i] * b[i];
 }
 
+int sumArray(int[] array, int n){
+    int sum = 0;
+
+    for(int i = 0; i <n; i++){
+        sum += array[i];
+    }
+
+    return sum;
+}
+
 int main()
 {
     const int arraySize = 100;
