@@ -107,7 +107,7 @@ cudaError_t multiplyWithCuda(double *c, const double *a, const double *b, unsign
         goto Error;
     }
 
-    dim3 threadsPerBlock(10, 1)
+	dim3 threadsPerBlock(10, 1);
     // Launch a kernel on the GPU with one thread for each element.
     mulKernel<<<10, threadsPerBlock>>>(dev_c, dev_a, dev_b);
 

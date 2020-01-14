@@ -24,17 +24,17 @@ double sumArray (double v[], int n){
 
 int main()
 {
-    const double arraySize = 100;
+    const int arraySize = 100;
 
-    double a[arraySize] = { 0 };
-    double b[arraySize] = { 0 };
+    double a[arraySize] = { 0.0 };
+    double b[arraySize] = { 0.0 };
 
     for(int i = 0; i < arraySize; i++){
-        a[i] = i;
-        b[i] = 2*i;
+        a[i] = (double) i;
+        b[i] = 2.0 * i;
     }
 
-    double c[arraySize] = { 0 };
+    double c[arraySize] = { 0.0 };
 
     // Add vectors in parallel.
     cudaError_t cudaStatus = multiplyWithCuda(c, a, b, arraySize);
