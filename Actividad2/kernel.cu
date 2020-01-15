@@ -3,13 +3,13 @@
 
 #include <stdio.h>
 
-cudaError_t multiplyWithCuda(double *c, const double *a, const double *b, unsigned int size);
+cudaError_t mulWithCuda(double *c, const double *a, const double *b, unsigned int size);
 
 __global__ void mulKernel(double *c, const double *a, const double *b)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
         c[i] = a[i] * b[i];
-	printf("DIM= %d\tID_BLOQUE X: %d\tx: %d\ty: %d\t c[i]= %lf = (a[i]= %lf)*(b[i]=%lf)\n",blockDim.x, blockIdx.x, threadIdx.x, threadIdx.y, c[i], a[i], b[i]);
+	printf("DIM= %d\tID_BLOQUE X: %d\tx: %d\ty: %d\t c[i]= %.2f = (a[i]= %.2f)*(b[i]=%.2f)\n",blockDim.x, blockIdx.x, threadIdx.x, threadIdx.y, c[i], a[i], b[i]);
 }
 
 double sumArray (double v[], int n){
@@ -37,9 +37,9 @@ int main()
     double c[arraySize] = { 0 };
 
     // Add vectors in parallel.
-    cudaError_t cudaStatus = multiplyWithCuda(c, a, b, arraySize);
+    cudaError_t cudaStatus = mulWithCuda(c, a, b, arraySize);
     if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "multiplyWithCuda failed!");
+        fprintf(stderr, "mulWithCuda failed!");
         return 1;
     }
 
@@ -60,7 +60,7 @@ int main()
 }
 
 // Helper function for using CUDA to add vectors in parallel.
-cudaError_t multiplyWithCuda(double *c, const double *a, const double *b, unsigned int size)
+cudaError_t mulWithCuda(double *c, const double *a, const double *b, unsigned int size)
 {
     double *dev_a = 0;
     double *dev_b = 0;

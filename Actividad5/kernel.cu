@@ -5,9 +5,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-cudaError_t matrixMultiplicationWithCuda(double* c, const double* a, const double* b, unsigned int size);
+cudaError_t matMulWithCuda(double* c, const double* a, const double* b, unsigned int size);
 
-__global__ void matrixMultiplicationKernel(double* c, const double* a, const double* b, int N)
+__global__ void matMulKernel(double* c, const double* a, const double* b, int N)
 {
 	int i = threadIdx.x;
 	int j = threadIdx.y;
@@ -18,15 +18,6 @@ __global__ void matrixMultiplicationKernel(double* c, const double* a, const dou
 	c[i * N + j] = sum;
 }
 
-__global__ void showThreadInfo(double* c, const double* a, const double* b)
-{
-	int i = threadIdx.x;
-	int j = blockIdx.x;
-	int k = blockDim.x;
-	int m = k * j + i;
-	printf("Indice de hilo: %d, Indice de bloque: %d, dim de bloque: %d, Calculo: %lf * %lf = %lf\n", i, j, k, a[m], b[m], a[m] * b[m]);
-}
-
 int main()
 {
 	int N = 3;
@@ -35,7 +26,7 @@ int main()
 	double b[9] = { 0.0, -1.0, -2.0, 1.0, 0.0, -1.0, 2.0, 1.0, 0.0 };
 
 	// Add vectors in parallel.
-	cudaError_t cudaStatus = matrixMultiplicationWithCuda(c, a, b, N);
+	cudaError_t cudaStatus = matMulWithCuda(c, a, b, N);
 	if (cudaStatus != cudaSuccess) {
 		fprintf(stderr, "addWithCuda failed!");
 		return 1;
@@ -43,7 +34,7 @@ int main()
 
 	for (int i = 0; i < N * N; i++) {
 		if (i % N == 0) printf("\n");
-		printf("%lf ", c[i]);
+		printf("%.2f\t", c[i]);
 	}
 
 	// cudaDeviceReset must be called before exiting in order for profiling and
@@ -58,7 +49,7 @@ int main()
 	return 0;
 }
 
-cudaError_t matrixMultiplicationWithCuda(double* c, const double* a, const double* b, unsigned int ldim)
+cudaError_t matMulWithCuda(double* c, const double* a, const double* b, unsigned int ldim)
 {
 	double* dev_a = 0;
 	double* dev_b = 0;
@@ -109,7 +100,7 @@ cudaError_t matrixMultiplicationWithCuda(double* c, const double* a, const doubl
 	dim3 threadsPerBlock(ldim, ldim);
 
 	// Launch a kernel on the GPU with one thread for each element.
-	matrixMultiplicationKernel << <1, threadsPerBlock >> > (dev_c, dev_a, dev_b, ldim);
+	matMulKernel << <1, threadsPerBlock >> > (dev_c, dev_a, dev_b, ldim);
 
 	// Check for any errors launching the kernel
 	cudaStatus = cudaGetLastError();

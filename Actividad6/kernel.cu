@@ -5,9 +5,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-cudaError_t matrixMultiplicationWithCuda(double* c, const double* a, const double* b, unsigned int size);
+cudaError_t matMulWithCuda(double* c, const double* a, const double* b, unsigned int size);
 
-__global__ void matrixMultiplicationKernel(double* c, const double* a, const double* b, int N)
+__global__ void matMulKernel(double* c, const double* a, const double* b, int N)
 {
 	int i = threadIdx.x;
 	int j = threadIdx.y;
@@ -18,20 +18,11 @@ __global__ void matrixMultiplicationKernel(double* c, const double* a, const dou
 	c[i * N + j] = sum;
 }
 
-__global__ void showThreadInfo(double* c, const double* a, const double* b)
-{
-	int i = threadIdx.x;
-	int j = blockIdx.x;
-	int k = blockDim.x;
-	int m = k * j + i;
-	printf("Indice de hilo: %d, Indice de bloque: %d, dim de bloque: %d, Calculo: %lf * %lf = %lf\n", i, j, k, a[m], b[m], a[m] * b[m]);
-}
-
 int main()
 {
 	int N = 3;
 	for (int N = 1; N <= 32; N = N * 2) {
-		printf("TAMA�O = %d", N);
+		printf("SIZE = %d \n", N);
 		double* c = (double*)malloc(sizeof(double) * N * N);
 		double* a = (double*)malloc(sizeof(double) * N * N);
 		double* b = (double*)malloc(sizeof(double) * N * N);
@@ -44,10 +35,7 @@ int main()
 		cudaEvent_t start, stop;
 		cudaEventCreate(&start);
 		cudaEventCreate(&stop);
-		// Add vectors in parallel.
-
-		cudaError_t cudaStatus = matrixMultiplicationWithCuda(c, a, b, N);
-
+		cudaError_t cudaStatus = matMulWithCuda(c, a, b, N);
 		if (cudaStatus != cudaSuccess) {
 			fprintf(stderr, "addWithCuda failed!");
 			return 1;
@@ -73,97 +61,101 @@ int main()
 	return 0;
 }
 
-cudaError_t matrixMultiplicationWithCuda(double* c, const double* a, const double* b, unsigned int ldim)
+cudaError_t matMulWithCuda(double* c, const double* a, const double* b, unsigned int ldim)
 {
-
+	double* dev_a = 0;
+	double* dev_b = 0;
+	double* dev_c = 0;
 	cudaError_t cudaStatus;
 	cudaEvent_t start, stop;
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
+
+	int matrixDim = ldim * ldim;
 	cudaEventRecord(start);
-	for (int i = 0; i <= 10; i++) {
-		double* dev_a = 0;
-		double* dev_b = 0;
-		double* dev_c = 0;
-		int matrixDim = ldim * ldim;
-
-		// Choose which GPU to run on, change this on a multi-GPU system.
-		cudaStatus = cudaSetDevice(0);
-		if (cudaStatus != cudaSuccess) {
-			fprintf(stderr, "cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?");
-			goto Error;
-		}
-
-		// Allocate GPU buffers for three vectors (two input, one output)    .
-		cudaStatus = cudaMalloc((void**)&dev_c, matrixDim * sizeof(double));
-		if (cudaStatus != cudaSuccess) {
-			fprintf(stderr, "cudaMalloc failed!");
-			goto Error;
-		}
-
-		cudaStatus = cudaMalloc((void**)&dev_a, matrixDim * sizeof(double));
-		if (cudaStatus != cudaSuccess) {
-			fprintf(stderr, "cudaMalloc failed!");
-			goto Error;
-		}
-
-		cudaStatus = cudaMalloc((void**)&dev_b, matrixDim * sizeof(double));
-		if (cudaStatus != cudaSuccess) {
-			fprintf(stderr, "cudaMalloc failed!");
-			goto Error;
-		}
-
-		// Copy input vectors from host memory to GPU buffers.
-		cudaStatus = cudaMemcpy(dev_a, a, matrixDim * sizeof(double), cudaMemcpyHostToDevice);
-		if (cudaStatus != cudaSuccess) {
-			fprintf(stderr, "cudaMemcpy failed!");
-			goto Error;
-		}
-
-		cudaStatus = cudaMemcpy(dev_b, b, matrixDim * sizeof(double), cudaMemcpyHostToDevice);
-		if (cudaStatus != cudaSuccess) {
-			fprintf(stderr, "cudaMemcpy failed!");
-			goto Error;
-		}
-
-		dim3 threadsPerBlock(ldim, ldim);
-		// Launch a kernel on the GPU with one thread for each element.
-
-		matrixMultiplicationKernel << <1, threadsPerBlock >> > (dev_c, dev_a, dev_b, ldim);
-
-
-
-		// Check for any errors launching the kernel
-		cudaStatus = cudaGetLastError();
-		if (cudaStatus != cudaSuccess) {
-			fprintf(stderr, "addKernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-			goto Error;
-		}
-
-		// cudaDeviceSynchronize waits for the kernel to finish, and returns
-		// any errors encountered during the launch.
-		cudaStatus = cudaDeviceSynchronize();
-		if (cudaStatus != cudaSuccess) {
-			fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching addKernel!\n", cudaStatus);
-			goto Error;
-		}
-
-		// Copy output vector from GPU buffer to host memory.
-		cudaStatus = cudaMemcpy(c, dev_c, matrixDim * sizeof(double), cudaMemcpyDeviceToHost);
-		if (cudaStatus != cudaSuccess) {
-			fprintf(stderr, "cudaMemcpy failed!");
-			goto Error;
-		}
-
-	Error:
-		cudaFree(dev_c);
-		cudaFree(dev_a);
-		cudaFree(dev_b);
+	// Choose which GPU to run on, change this on a multi-GPU system.
+	cudaStatus = cudaSetDevice(0);
+	if (cudaStatus != cudaSuccess) {
+		fprintf(stderr, "cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?");
+		goto Error;
 	}
+
+	// Allocate GPU buffers for three vectors (two input, one output)    .
+	cudaStatus = cudaMalloc((void**)&dev_c, matrixDim * sizeof(double));
+	if (cudaStatus != cudaSuccess) {
+		fprintf(stderr, "cudaMalloc failed!");
+		goto Error;
+	}
+
+	cudaStatus = cudaMalloc((void**)&dev_a, matrixDim * sizeof(double));
+	if (cudaStatus != cudaSuccess) {
+		fprintf(stderr, "cudaMalloc failed!");
+		goto Error;
+	}
+
+	cudaStatus = cudaMalloc((void**)&dev_b, matrixDim * sizeof(double));
+	if (cudaStatus != cudaSuccess) {
+		fprintf(stderr, "cudaMalloc failed!");
+		goto Error;
+	}
+
+	// Copy input vectors from host memory to GPU buffers.
+	cudaStatus = cudaMemcpy(dev_a, a, matrixDim * sizeof(double), cudaMemcpyHostToDevice);
+	if (cudaStatus != cudaSuccess) {
+		fprintf(stderr, "cudaMemcpy failed!");
+		goto Error;
+	}
+
+	cudaStatus = cudaMemcpy(dev_b, b, matrixDim * sizeof(double), cudaMemcpyHostToDevice);
+	if (cudaStatus != cudaSuccess) {
+		fprintf(stderr, "cudaMemcpy failed!");
+		goto Error;
+	}
+
+	dim3 threadsPerBlock(ldim, ldim);
 	cudaEventRecord(stop);
 	cudaEventSynchronize(stop);
 	float milliseconds = 0;
 	cudaEventElapsedTime(&milliseconds, start, stop);
-	printf("Milisegundos en nucleo=%lf\n", milliseconds / 10);
+	printf("\tCOPY TIME: %lfms\n", milliseconds);
+	// Launch a kernel on the GPU with one thread for each element.
+	cudaEventRecord(start);
+	for (int count = 0; count < 10; count++) {
+		matMulKernel << <1, threadsPerBlock >> > (dev_c, dev_a, dev_b, ldim);
+	}
+	cudaEventRecord(stop);
+
+	// Check for any errors launching the kernel
+	cudaStatus = cudaGetLastError();
+	if (cudaStatus != cudaSuccess) {
+		fprintf(stderr, "addKernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
+		goto Error;
+	}
+
+	// cudaDeviceSynchronize waits for the kernel to finish, and returns
+	// any errors encountered during the launch.
+	cudaStatus = cudaDeviceSynchronize();
+	if (cudaStatus != cudaSuccess) {
+		fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching addKernel!\n", cudaStatus);
+		goto Error;
+	}
+
+	// Copy output vector from GPU buffer to host memory.
+	cudaStatus = cudaMemcpy(c, dev_c, matrixDim * sizeof(double), cudaMemcpyDeviceToHost);
+	if (cudaStatus != cudaSuccess) {
+		fprintf(stderr, "cudaMemcpy failed!");
+		goto Error;
+	}
+	cudaEventSynchronize(stop);
+	milliseconds = 0;
+	cudaEventElapsedTime(&milliseconds, start, stop);
+	printf("\tCORE TIME: %lfms\n", milliseconds / 10);
+Error:
+	cudaFree(dev_c);
+	cudaFree(dev_a);
+	cudaFree(dev_b);
+
 	return cudaStatus;
 }
+
+

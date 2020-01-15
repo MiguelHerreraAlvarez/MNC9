@@ -21,19 +21,19 @@ void main() {
 	double* A;
 	double* B;
 	double* C;
-	int lengths[] = { 1,2,4,8,16,32,64 };
-	for (int i = 0; i < sizeof(lengths) / sizeof(int); i++)
+	
+	for (int i = 1; i <= 64 ; i*=2)
 	{
-		A = (double*)malloc(sizeof(double) * lengths[i] * lengths[i]);
-		B = (double*)malloc(sizeof(double) * lengths[i] * lengths[i]);
-		C = (double*)malloc(sizeof(double) * lengths[i] * lengths[i]);
+		A = (double*)malloc(sizeof(double) * i * i);
+		B = (double*)malloc(sizeof(double) * i * i);
+		C = (double*)malloc(sizeof(double) * i * i);
 
-		for (int k = 0; k < lengths[i]; k++)
+		for (int k = 0; k < i; k++)
 		{
-			for (int j = 0; j < lengths[i]; j++)
+			for (int j = 0; j < i; j++)
 			{
-				A[k * lengths[i] + j] = k + j;
-				B[k * lengths[i] + j] = k - j;
+				A[k * i + j] = k + j;
+				B[k * i + j] = k - j;
 			}
 		}
 
@@ -41,19 +41,20 @@ void main() {
 
 		for (int j = 0; j < n_iterations; j++)
 		{
-			MatrixMultiplication(A, B, C, lengths[i]);
+			MatrixMultiplication(A, B, C, i);
 		}
 		
 		stop = clock();
-		printf("Tiempo secuencial: %f milisegundos para N=%d\n", ((float)(stop - start) / n_iterations) / CLOCKS_PER_SEC, lengths[i]);
+		printf("SIZE = %d\tTIME: %f ms\n", i, ((float)(stop - start) / n_iterations) / CLOCKS_PER_SEC);
 
-		if (lengths[i] == 64) {
-			printf("Diagonal de la matriz de tamaño 64*64");
-			for (int k = 0; k < lengths[i]; k++)
+		if (i == 64) {
+			printf("Diagonal");
+			for (int k = 0; k < i; k++)
 			{
-				printf(" %lf ", C[k * lengths[i] + k]);
+				printf(" %.2f ", C[k * i + k]);
 			}
 		}
+		
 		free(A);
 		free(B);
 		free(C);
