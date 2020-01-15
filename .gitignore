@@ -6,3 +6,6 @@
 *.iobj
 *.ipdb
 *.pdb
+*.exp
+*.lib
+
