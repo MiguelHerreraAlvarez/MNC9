@@ -1,4 +1,4 @@
-﻿
+
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
@@ -9,13 +9,13 @@ cudaError_t matrixMultiplicationWithCuda(double* c, const double* a, const doubl
 
 __global__ void matrixMultiplicationKernel(double* c, const double* a, const double* b, int N)
 {
+	int i = threadIdx.x;
+	int j = threadIdx.y;
 	double sum = 0;
-	int row = blockIdx.y * blockDim.y + threadIdx.y;
-	int col = blockIdx.x * blockDim.x + threadIdx.x;
 	for (int k = 0; k < N; k++) {
-		sum += a[row * N + k] * b[k * N + col];
+		sum += a[i * N + k] * b[k * N + j];
 	}
-	c[row * N + col] = sum;
+	c[i * N + j] = sum;
 }
 
 __global__ void showThreadInfo(double* c, const double* a, const double* b)
@@ -29,25 +29,13 @@ __global__ void showThreadInfo(double* c, const double* a, const double* b)
 
 int main()
 {
-	int N = 64;
-	//for(int N = 1; N <= 32; N = N*2){
-		//printf("TAMA�O = %d", N);
-		//double *a = (double*)malloc(sizeof(double) * N*N);
-		//double *b = (double*)malloc(sizeof(double) * N*N);
+	int N = 3;
+	//double *a = (double*)malloc(sizeof(double) * N*N);
+	//double *b = (double*)malloc(sizeof(double) * N*N);
 	double* c = (double*)malloc(sizeof(double) * N * N);
-	//double a[9] = { 0.0, 1.0, 2.0, 1.0, 2.0, 3.0, 2.0, 3.0, 4.0 };
-	//double b[9] = { 0.0, -1.0, -2.0, 1.0, 0.0, -1.0, 2.0, 1.0, 0.0 };
-	double* a = (double*)malloc(sizeof(double) * N * N);
-	double* b = (double*)malloc(sizeof(double) * N * N);
-	for (int i = 0; i < N; i++) {
-		for (int j = 0; j < N; j++) {
-			a[i * N + j] = (float)i + j;
-			b[i * N + j] = (float)i - j;
-		}
-	}
-	cudaEvent_t start, stop;
-	cudaEventCreate(&start);
-	cudaEventCreate(&stop);
+	double a[9] = { 0.0, 1.0, 2.0, 1.0, 2.0, 3.0, 2.0, 3.0, 4.0 };
+	double b[9] = { 0.0, -1.0, -2.0, 1.0, 0.0, -1.0, 2.0, 1.0, 0.0 };
+
 	// Add vectors in parallel.
 	cudaError_t cudaStatus = matrixMultiplicationWithCuda(c, a, b, N);
 	//cudaError_t cudaStatus = addWithCuda(c, a, b, arraySize);
@@ -56,8 +44,9 @@ int main()
 		return 1;
 	}
 
-	for (int i = 0; i < N; i++) {
-		printf("%lf ", c[i * N + i]);
+	for (int i = 0; i < N * N; i++) {
+		if (i % N == 0) printf("\n");
+		printf("%lf ", c[i]);
 	}
 
 	// cudaDeviceReset must be called before exiting in order for profiling and
@@ -68,10 +57,9 @@ int main()
 		return 1;
 	}
 
-	free(a);
-	free(b);
+	//free(a);
+	//free(b);
 	free(c);
-	//}
 	return 0;
 }
 
@@ -81,14 +69,9 @@ cudaError_t matrixMultiplicationWithCuda(double* c, const double* a, const doubl
 	double* dev_b = 0;
 	double* dev_c = 0;
 	cudaError_t cudaStatus;
-	cudaEvent_t start, stop;
-	cudaEventCreate(&start);
-	cudaEventCreate(&stop);
 
-	//if (ldim <= 32) 
 	int matrixDim = ldim * ldim;
-	//else matrixDim = 32 * 32;
-	cudaEventRecord(start);
+
 	// Choose which GPU to run on, change this on a multi-GPU system.
 	cudaStatus = cudaSetDevice(0);
 	if (cudaStatus != cudaSuccess) {
@@ -127,30 +110,11 @@ cudaError_t matrixMultiplicationWithCuda(double* c, const double* a, const doubl
 		fprintf(stderr, "cudaMemcpy failed!");
 		goto Error;
 	}
-	printf("Calculito para %d = %d", ldim, ldim / 32);
-	dim3 dimGrid(ldim / 32, ldim / 32);
-	//int dimGrid = ldim / 32;
-	cudaEventRecord(stop);
-	cudaEventSynchronize(stop);
-	float milliseconds = 0;
-	cudaEventElapsedTime(&milliseconds, start, stop);
-	printf("Milisegundos en copia=%lf\n", milliseconds);
-	// Launch a kernel on the GPU with one thread for each element.
-	cudaEventRecord(start);
-	if (ldim <= 32) {
-		dim3 threadsPerBlock(ldim, ldim);
-		for (int count = 0; count < 10; count++) {
-			matrixMultiplicationKernel << <dimGrid, threadsPerBlock >> > (dev_c, dev_a, dev_b, ldim);
-		}
-	}
-	else {
 
-		dim3 threadsPerBlock(32, 32);
-		for (int count = 0; count < 10; count++) {
-			matrixMultiplicationKernel << <dimGrid, threadsPerBlock >> > (dev_c, dev_a, dev_b, ldim);
-		}
-	}
-	cudaEventRecord(stop);
+	dim3 threadsPerBlock(ldim, ldim);
+
+	// Launch a kernel on the GPU with one thread for each element.
+	matrixMultiplicationKernel << <1, threadsPerBlock >> > (dev_c, dev_a, dev_b, ldim);
 
 	// Check for any errors launching the kernel
 	cudaStatus = cudaGetLastError();
@@ -173,10 +137,7 @@ cudaError_t matrixMultiplicationWithCuda(double* c, const double* a, const doubl
 		fprintf(stderr, "cudaMemcpy failed!");
 		goto Error;
 	}
-	cudaEventSynchronize(stop);
-	milliseconds = 0;
-	cudaEventElapsedTime(&milliseconds, start, stop);
-	printf("Milisegundos en nucleo=%lf\n", milliseconds / 10);
+
 Error:
 	cudaFree(dev_c);
 	cudaFree(dev_a);
@@ -184,5 +145,3 @@ Error:
 
 	return cudaStatus;
 }
-
-
