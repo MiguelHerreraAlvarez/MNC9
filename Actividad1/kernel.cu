@@ -44,7 +44,7 @@ int main()
 
 
 
-    printf("El producto escalar es: {%lf}\n",
+    printf("El producto escalar es: {%.2f}\n",
         sumArray(c,arraySize));
 
     // cudaDeviceReset must be called before exiting in order for profiling and

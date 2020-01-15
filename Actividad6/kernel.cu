@@ -1,7 +1,6 @@
 ﻿
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -20,7 +19,6 @@ __global__ void matMulKernel(double* c, const double* a, const double* b, int N)
 
 int main()
 {
-	int N = 3;
 	for (int N = 1; N <= 32; N = N * 2) {
 		printf("SIZE = %d \n", N);
 		double* c = (double*)malloc(sizeof(double) * N * N);

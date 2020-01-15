@@ -19,7 +19,6 @@ __global__ void matMulKernel(double* c, const double* a, const double* b, int N)
 
 int main()
 {
-	int N = 64;
 	for (int N = 64; N <= 1024; N = N * 2) {
 		printf("SIZE = %d\t", N);
 
@@ -36,9 +35,9 @@ int main()
 		cudaEvent_t start, stop;
 		cudaEventCreate(&start);
 		cudaEventCreate(&stop);
-		// Add vectors in parallel.
+		
 		cudaError_t cudaStatus = matMulWithCuda(c, a, b, N);
-		//cudaError_t cudaStatus = addWithCuda(c, a, b, arraySize);
+		
 		if (cudaStatus != cudaSuccess) {
 			fprintf(stderr, "addWithCuda failed!");
 			return 1;
@@ -71,9 +70,8 @@ cudaError_t matMulWithCuda(double* c, const double* a, const double* b, unsigned
 		double* dev_a = 0;
 		double* dev_b = 0;
 		double* dev_c = 0;
-		//if (ldim <= 32) 
+		
 		int matrixDim = ldim * ldim;
-		//else matrixDim = 32 * 32;
 
 		// Choose which GPU to run on, change this on a multi-GPU system.
 		cudaStatus = cudaSetDevice(0);
@@ -82,7 +80,7 @@ cudaError_t matMulWithCuda(double* c, const double* a, const double* b, unsigned
 			goto Error;
 		}
 
-		// Allocate GPU buffers for three vectors (two input, one output)    .
+		// Allocate GPU buffers for three vectors (two input, one output).
 		cudaStatus = cudaMalloc((void**)&dev_c, matrixDim * sizeof(double));
 		if (cudaStatus != cudaSuccess) {
 			fprintf(stderr, "cudaMalloc failed!");
@@ -114,19 +112,15 @@ cudaError_t matMulWithCuda(double* c, const double* a, const double* b, unsigned
 			goto Error;
 		}
 		int dimension = 32;
-		//printf("Calculo para %d = %d", ldim, ldim / dimension);
 
 		dim3 dimGrid(ldim / dimension, ldim / dimension);
-		//int dimGrid = ldim / 32;
 
 		float milliseconds = 0;
 		// Launch a kernel on the GPU with one thread for each element.
 
 
 		dim3 threadsPerBlock(dimension, dimension);
-		//for (int count = 0; count < 10; count++) {
 		matMulKernel << <dimGrid, threadsPerBlock >> > (dev_c, dev_a, dev_b, ldim);
-		//}
 
 		cudaEventRecord(stop);
 

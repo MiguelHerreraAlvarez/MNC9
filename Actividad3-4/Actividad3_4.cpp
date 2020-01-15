@@ -14,7 +14,6 @@ void MatrixMultiplication(double* A, double* B, double* C, int N) {
 		}
 	}
 }
-
 void main() {
 	clock_t start, stop;
 
