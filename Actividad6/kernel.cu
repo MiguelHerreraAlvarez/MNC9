@@ -32,11 +32,7 @@ int main()
 	int N = 3;
 	for (int N = 1; N <= 32; N = N * 2) {
 		printf("TAMA�O = %d", N);
-		//double *a = (double*)malloc(sizeof(double) * N*N);
-		//double *b = (double*)malloc(sizeof(double) * N*N);
 		double* c = (double*)malloc(sizeof(double) * N * N);
-		//double a[9] = { 0.0, 1.0, 2.0, 1.0, 2.0, 3.0, 2.0, 3.0, 4.0 };
-		//double b[9] = { 0.0, -1.0, -2.0, 1.0, 0.0, -1.0, 2.0, 1.0, 0.0 };
 		double* a = (double*)malloc(sizeof(double) * N * N);
 		double* b = (double*)malloc(sizeof(double) * N * N);
 		for (int i = 0; i < N; i++) {
@@ -51,7 +47,7 @@ int main()
 		// Add vectors in parallel.
 
 		cudaError_t cudaStatus = matrixMultiplicationWithCuda(c, a, b, N);
-		//cudaError_t cudaStatus = addWithCuda(c, a, b, arraySize);
+
 		if (cudaStatus != cudaSuccess) {
 			fprintf(stderr, "addWithCuda failed!");
 			return 1;

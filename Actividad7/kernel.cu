@@ -30,13 +30,7 @@ __global__ void showThreadInfo(double* c, const double* a, const double* b)
 int main()
 {
 	int N = 64;
-	//for(int N = 1; N <= 32; N = N*2){
-		//printf("TAMA�O = %d", N);
-		//double *a = (double*)malloc(sizeof(double) * N*N);
-		//double *b = (double*)malloc(sizeof(double) * N*N);
 	double* c = (double*)malloc(sizeof(double) * N * N);
-	//double a[9] = { 0.0, 1.0, 2.0, 1.0, 2.0, 3.0, 2.0, 3.0, 4.0 };
-	//double b[9] = { 0.0, -1.0, -2.0, 1.0, 0.0, -1.0, 2.0, 1.0, 0.0 };
 	double* a = (double*)malloc(sizeof(double) * N * N);
 	double* b = (double*)malloc(sizeof(double) * N * N);
 	for (int i = 0; i < N; i++) {
@@ -50,7 +44,6 @@ int main()
 	cudaEventCreate(&stop);
 	// Add vectors in parallel.
 	cudaError_t cudaStatus = matrixMultiplicationWithCuda(c, a, b, N);
-	//cudaError_t cudaStatus = addWithCuda(c, a, b, arraySize);
 	if (cudaStatus != cudaSuccess) {
 		fprintf(stderr, "addWithCuda failed!");
 		return 1;
@@ -85,9 +78,7 @@ cudaError_t matrixMultiplicationWithCuda(double* c, const double* a, const doubl
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 
-	//if (ldim <= 32) 
 	int matrixDim = ldim * ldim;
-	//else matrixDim = 32 * 32;
 	cudaEventRecord(start);
 	// Choose which GPU to run on, change this on a multi-GPU system.
 	cudaStatus = cudaSetDevice(0);
@@ -129,7 +120,6 @@ cudaError_t matrixMultiplicationWithCuda(double* c, const double* a, const doubl
 	}
 	printf("Calculito para %d = %d", ldim, ldim / 32);
 	dim3 dimGrid(ldim / 32, ldim / 32);
-	//int dimGrid = ldim / 32;
 	cudaEventRecord(stop);
 	cudaEventSynchronize(stop);
 	float milliseconds = 0;

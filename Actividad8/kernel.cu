@@ -36,10 +36,7 @@ int main()
 		double* a = (double*)malloc(sizeof(double) * N * N);
 		double* b = (double*)malloc(sizeof(double) * N * N);
 		double* c = (double*)malloc(sizeof(double) * N * N);
-		//double a[9] = { 0.0, 1.0, 2.0, 1.0, 2.0, 3.0, 2.0, 3.0, 4.0 };
-		//double b[9] = { 0.0, -1.0, -2.0, 1.0, 0.0, -1.0, 2.0, 1.0, 0.0 };
-		//double* a = (double*)malloc(sizeof(double) * N * N);
-		//double* b = (double*)malloc(sizeof(double) * N * N);
+
 		for (int i = 0; i < N; i++) {
 			for (int j = 0; j < N; j++) {
 				a[i * N + j] = (float)i + j;
@@ -51,15 +48,10 @@ int main()
 		cudaEventCreate(&stop);
 		// Add vectors in parallel.
 		cudaError_t cudaStatus = matrixMultiplicationWithCuda(c, a, b, N);
-		//cudaError_t cudaStatus = addWithCuda(c, a, b, arraySize);
 		if (cudaStatus != cudaSuccess) {
 			fprintf(stderr, "addWithCuda failed!");
 			return 1;
 		}
-
-		//for (int i = 0; i < N; i++) {
-			//printf("%lf ", c[i * N + i]);
-		//}
 
 		// cudaDeviceReset must be called before exiting in order for profiling and
 		// tracing tools such as Nsight and Visual Profiler to show complete traces.
@@ -88,9 +80,7 @@ cudaError_t matrixMultiplicationWithCuda(double* c, const double* a, const doubl
 		double* dev_a = 0;
 		double* dev_b = 0;
 		double* dev_c = 0;
-		//if (ldim <= 32) 
 		int matrixDim = ldim * ldim;
-		//else matrixDim = 32 * 32;
 
 		// Choose which GPU to run on, change this on a multi-GPU system.
 		cudaStatus = cudaSetDevice(0);
@@ -131,10 +121,8 @@ cudaError_t matrixMultiplicationWithCuda(double* c, const double* a, const doubl
 			goto Error;
 		}
 		int dimension = 32;
-		//printf("Calculo para %d = %d", ldim, ldim / dimension);
 
 		dim3 dimGrid(ldim / dimension, ldim / dimension);
-		//int dimGrid = ldim / 32;
 
 		float milliseconds = 0;
 		// Launch a kernel on the GPU with one thread for each element.
@@ -147,9 +135,7 @@ cudaError_t matrixMultiplicationWithCuda(double* c, const double* a, const doubl
 		else {
 
 			dim3 threadsPerBlock(dimension, dimension);
-			//for (int count = 0; count < 10; count++) {
 			matrixMultiplicationKernel << <dimGrid, threadsPerBlock >> > (dev_c, dev_a, dev_b, ldim);
-			//}
 		}
 		cudaEventRecord(stop);
 
